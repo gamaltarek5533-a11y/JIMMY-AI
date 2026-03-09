@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIMMY — منصة الذكاء الاصطناعي</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@300;400;500&family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --g1: #00ff87;
+  --g2: #00c96b;
+  --g3: #009e52;
+  --g4: #005c2e;
+  --bg: #050a07;
+  --s1: #091410;
+  --s2: #0c1c16;
+  --s3: #112619;
+  --txt: #e8f5ee;
+  --txt2: #7ab896;
+  --txt3: #3d7a5a;
+  --border: rgba(0,255,135,0.08);
+  --border2: rgba(0,255,135,0.15);
+  --glow: 0 0 40px rgba(0,255,135,0.15);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{
+  font-family:'Cairo',sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* CUSTOM CURSOR */
+#cursor{
+  position:fixed;width:12px;height:12px;
+  background:var(--g1);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:width 0.2s,height 0.2s,background 0.2s;
+  box-shadow:0 0 20px rgba(0,255,135,0.6);
+}
+#cursor-ring{
+  position:fixed;width:36px;height:36px;
+  border:1px solid rgba(0,255,135,0.4);
+  border-radius:50%;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:all 0.15s ease;
+}
+body:has(a:hover) #cursor,body:has(button:hover) #cursor{
+  width:20px;height:20px;
+  background:var(--g1);
+}
+
+/* ANIMATED BG MESH */
+.mesh{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 60% at 60% -10%, rgba(0,180,90,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at -10% 60%, rgba(0,255,135,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 50% at 100% 80%, rgba(0,100,50,0.06) 0%, transparent 50%);
+}
+
+/* NOISE */
+.noise{
+  position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.025;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--g3);border-radius:2px;}
+
+/* PROGRESS */
+#prog{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--g3),var(--g1));
+  box-shadow:0 0 10px var(--g1);
+  z-index:200;transition:width 0.1s;
+}
+
+/* ═══════════════ NAV ═══════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 52px;height:64px;
+  background:rgba(5,10,7,0.7);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  transition:all 0.4s;
+}
+nav.s{border-bottom-color:var(--border2);background:rgba(5,10,7,0.9);}
+
+.logo{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:22px;font-weight:800;
+  color:var(--g1);letter-spacing:4px;
+  text-decoration:none;
+  text-shadow:0 0 30px rgba(0,255,135,0.5);
+  position:relative;
+}
+.logo::after{
+  content:'AI';
+  position:absolute;top:-6px;right:-26px;
+  font-size:8px;letter-spacing:1px;
+  background:var(--g1);color:var(--bg);
+  padding:1px 5px;border-radius:3px;
+  font-weight:700;
+}
+
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;color:var(--txt2);
+  text-decoration:none;letter-spacing:0.5px;
+  transition:color 0.3s;position:relative;
+}
+.nav-links a::after{
+  content:'';position:absolute;bottom:-4px;left:0;right:0;
+  height:1px;background:var(--g1);
+  transform:scaleX(0);transition:transform 0.3s;
+}
+.nav-links a:hover{color:var(--g1);}
+.nav-links a:hover::after{transform:scaleX(1);}
+
+.nav-r{display:flex;align-items:center;gap:16px;}
+.nav-badge{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--txt3);letter-spacing:1px;
+}
+.btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;font-weight:500;
+  padding:9px 22px;border-radius:6px;
+  text-decoration:none;border:none;cursor:none;
+  transition:all 0.3s;letter-spacing:0.5px;
+}
+.btn-p{
+  background:var(--g1);color:var(--bg);
+  box-shadow:0 0 24px rgba(0,255,135,0.25);
+}
+.btn-p:hover{box-shadow:0 0 40px rgba(0,255,135,0.5);transform:translateY(-2px);}
+.btn-o{
+  background:transparent;color:var(--g1);
+  border:1px solid rgba(0,255,135,0.3);
+}
+.btn-o:hover{border-color:var(--g1);background:rgba(0,255,135,0.05);}
+
+/* ═══════════════ HERO ═══════════════ */
+#hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:120px 40px 60px;
+  position:relative;z-index:1;overflow:hidden;
+}
+
+/* HERO GRID */
+#hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,135,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,135,0.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 75% 75% at 50% 40%, black 40%, transparent 100%);
+}
+
+/* FLOATING 3D ORBS */
+.orb{
+  position:absolute;border-radius:50%;
+  filter:blur(80px);pointer-events:none;
+  animation:float 8s ease-in-out infinite;
+}
+.o1{
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(0,180,90,0.12),transparent 70%);
+  top:-100px;right:-150px;animation-delay:0s;
+}
+.o2{
+  width:350px;height:350px;
+  background:radial-gradient(circle,rgba(0,255,135,0.07),transparent 70%);
+  bottom:10%;left:-100px;animation-delay:-3s;
+}
+.o3{
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(0,255,135,0.1),transparent 70%);
+  top:40%;right:10%;animation-delay:-5s;
+}
+@keyframes float{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-30px);}
+}
+
+.hero-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(0,255,135,0.06);
+  border:1px solid rgba(0,255,135,0.2);
+  border-radius:100px;padding:6px 18px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;color:var(--g1);letter-spacing:1px;
+  margin-bottom:40px;
+  animation:fadeUp 0.7s ease both;
+}
+.pill-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--g1);animation:blink 2s infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+#hero h1{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:clamp(44px,7vw,88px);
+  font-weight:800;line-height:1.05;
+  letter-spacing:-2px;
+  margin-bottom:28px;
+  animation:fadeUp 0.8s 0.1s ease both;
+}
+.h1-line1{display:block;color:var(--txt);}
+.h1-line2{
+  display:block;
+  background:linear-gradient(135deg,var(--g1),var(--g2) 50%,#00ffb3);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 30px rgba(0,255,135,0.3));
+}
+
+.hero-sub{
+  font-size:17px;color:var(--txt2);
+  max-width:520px;line-height:1.8;
+  margin:0 auto 44px;
+  animation:fadeUp 0.8s 0.2s ease both;
+}
+
+.hero-btns{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp 0.8s 0.3s ease both;margin-bottom:80px;
+}
+
+/* DASHBOARD MOCKUP */
+.mockup-wrap{
+  width:100%;max-width:760px;
+  background:rgba(9,20,16,0.8);
+  border:1px solid rgba(0,255,135,0.12);
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 40px 120px rgba(0,0,0,0.6), 0 0 80px rgba(0,255,135,0.05);
+  animation:fadeUp 1s 0.5s ease both;
+  backdrop-filter:blur(10px);
+  position:relative;z-index:2;
+}
+.mockup-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 20px;
+  border-bottom:1px solid rgba(0,255,135,0.08);
+  background:rgba(0,0,0,0.2);
+}
+.m-dot{width:10px;height:10px;border-radius:50%;}
+.md1{background:#ff5f57;} .md2{background:#febc2e;} .md3{background:#28c840;}
+.mockup-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--txt3);letter-spacing:1px;
+  margin-right:auto;
+}
+.mockup-body{
+  display:grid;grid-template-columns:160px 1fr;
+  min-height:240px;
+}
+.mockup-sidebar{
+  background:rgba(0,0,0,0.2);
+  border-left:1px solid rgba(0,255,135,0.06);
+  padding:16px 12px;display:flex;flex-direction:column;gap:4px;
+}
+.sb-item{
+  padding:8px 12px;border-radius:6px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--txt3);
+  cursor:none;transition:all 0.2s;display:flex;align-items:center;gap:8px;
+}
+.sb-item.active,.sb-item:hover{background:rgba(0,255,135,0.08);color:var(--g1);}
+.sb-icon{font-size:13px;}
+
+.mockup-content{padding:20px 24px;}
+.mc-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.mc-title{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:16px;font-weight:700;color:var(--txt);
+}
+.mc-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+.mc-btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;background:var(--g1);color:var(--bg);
+  padding:6px 14px;border-radius:4px;border:none;cursor:none;
+  font-weight:600;
+}
+
+.task-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-radius:8px;margin-bottom:6px;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(0,255,135,0.05);
+  transition:all 0.3s;
+}
+.task-row:hover{background:rgba(0,255,135,0.04);border-color:rgba(0,255,135,0.1);}
+.task-info{}
+.task-name{font-size:13px;color:var(--txt);font-weight:500;}
+.task-meta{font-size:10px;color:var(--txt3);margin-top:2px;font-family:'IBM Plex Mono',monospace;}
+.task-tags{display:flex;gap:6px;align-items:center;}
+.tag{
+  font-size:9px;padding:2px 8px;border-radius:3px;
+  font-family:'IBM Plex Mono',monospace;letter-spacing:0.5px;
+}
+.tag-g{background:rgba(0,255,135,0.1);color:var(--g1);border:1px solid rgba(0,255,135,0.2);}
+.tag-y{background:rgba(255,200,0,0.1);color:#ffc800;border:1px solid rgba(255,200,0,0.2);}
+.tag-r{background:rgba(255,80,80,0.1);color:#ff5050;border:1px solid rgba(255,80,80,0.2);}
+.task-ring{position:relative;width:32px;height:32px;}
+.ring-svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:3;}
+.ring-fg{fill:none;stroke-width:3;stroke-linecap:round;}
+.ring-pct{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:8px;font-family:'IBM Plex Mono',monospace;color:var(--txt2);
+}
+
+/* LOGOS BAR */
+.logos-bar{
+  padding:32px 52px;
+  background:var(--s1);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:0;
+  overflow:hidden;position:relative;z-index:1;
+}
+.logos-track{
+  display:flex;gap:64px;align-items:center;
+  animation:slide 25s linear infinite;white-space:nowrap;
+}
+.logos-track2{animation-delay:-12.5s;}
+@keyframes slide{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.logo-item{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;color:rgba(122,184,150,0.25);
+  letter-spacing:2px;display:flex;align-items:center;gap:8px;
+}
+.logo-item svg{opacity:0.25;}
+
+/* ═══════════════ FEATURES ═══════════════ */
+#features{
+  padding:120px 52px;
+  background:var(--s1);
+  position:relative;z-index:1;
+}
+#features::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 50% 70% at 50% 0%, rgba(0,255,135,0.03),transparent);
+}
+
+.sec-badge{
+  display:inline-block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:3px;color:var(--g2);
+  border:1px solid rgba(0,255,135,0.2);
+  padding:4px 12px;border-radius:3px;
+  margin-bottom:20px;
+}
+.sec-title{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:clamp(30px,4vw,52px);
+  font-weight:800;color:var(--txt);
+  line-height:1.1;letter-spacing:-1px;margin-bottom:16px;
+}
+.sec-sub{
+  font-size:16px;color:var(--txt2);
+  max-width:500px;line-height:1.8;margin-bottom:64px;
+}
+
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+
+.feat-card{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  transition:all 0.5s cubic-bezier(0.23,1,0.32,1);
+  position:relative;
+}
+.feat-card::before{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--g1),transparent);
+  opacity:0;transition:opacity 0.4s;
+}
+.feat-card:hover{
+  border-color:rgba(0,255,135,0.2);
+  transform:translateY(-6px);
+  box-shadow:0 24px 60px rgba(0,0,0,0.4),0 0 40px rgba(0,255,135,0.06);
+}
+.feat-card:hover::before{opacity:1;}
+
+.feat-preview{
+  height:160px;
+  background:var(--s2);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  padding:16px;
+}
+/* Mini UI previews per card */
+.preview-forecast{
+  display:flex;flex-direction:column;gap:8px;width:100%;
+}
+.pf-bar{height:6px;border-radius:3px;background:var(--s3);}
+.pf-bar-inner{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--g3),var(--g1));}
+.pf-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--txt3);margin-bottom:2px;}
+
+.preview-allocate{display:flex;flex-direction:column;gap:10px;width:100%;}
+.pa-row{display:flex;align-items:center;gap:10px;}
+.pa-avatar{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g1));
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:var(--bg);font-weight:700;flex-shrink:0;
+}
+.pa-load{flex:1;height:5px;border-radius:3px;background:var(--s3);}
+.pa-load-inner{height:100%;border-radius:3px;}
+.l-g{background:var(--g1);}
+.l-y{background:#ffc800;}
+.l-r{background:#ff6060;}
+.pa-pct{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--txt3);}
+
+.preview-analyze{display:flex;align-items:flex-end;gap:6px;width:100%;height:100px;padding:10px 0 0;}
+.pa-col{
+  flex:1;border-radius:4px 4px 0 0;
+  background:linear-gradient(0deg,var(--g4),var(--g2));
+  position:relative;transition:height 0.6s ease;
+}
+.pa-col::after{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:1px;background:var(--g1);
+  box-shadow:0 0 6px var(--g1);
+}
+
+.feat-body{padding:28px 28px 32px;}
+.feat-num{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--g3);letter-spacing:2px;margin-bottom:10px;
+}
+.feat-card h3{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:22px;font-weight:700;color:var(--txt);margin-bottom:12px;
+}
+.feat-card p{font-size:14px;color:var(--txt2);line-height:1.75;margin-bottom:24px;}
+.feat-link{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;color:var(--g1);text-decoration:none;
+  letter-spacing:0.5px;
+  transition:gap 0.3s;
+}
+.feat-link:hover{gap:14px;}
+.feat-link::after{content:'→';}
+
+/* ═══════════════ IMAGE GENERATION SECTION ═══════════════ */
+#image-gen{
+  padding:120px 52px;
+  background:var(--s2);
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+#image-gen::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 60% at 30% 50%, rgba(139, 92, 246, 0.05),transparent);
+}
+
+.image-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+}
+.image-left{}
+.image-left .sec-title{margin-bottom:20px;}
+.image-left p{font-size:15px;color:var(--txt2);line-height:1.8;margin-bottom:36px;}
+
+.image-showcase{
+  background:var(--s1);
+  border-radius:16px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  padding:16px;
+  box-shadow:var(--glow);
+}
+.image-showcase img{
+  width:100%;
+  border-radius:8px;
+  border:1px solid var(--border2);
+}
+.image-caption{
+  margin-top:12px;
+  text-align:center;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--txt2);
+}
+
+.prompt-demo{
+  background:var(--s3);
+  border-radius:12px;
+  padding:16px;
+  border-left:4px solid var(--g1);
+}
+.prompt-demo .prompt-text{
+  font-size:13px;
+  color:var(--txt);
+  margin-bottom:12px;
+}
+.prompt-demo .prompt-result{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.prompt-demo .result-badge{
+  background:rgba(139, 92, 246, 0.1);
+  border:1px solid rgba(139, 92, 246, 0.2);
+  padding:4px 12px;
+  border-radius:100px;
+  font-size:11px;
+  color:var(--g1);
+  font-family:'IBM Plex Mono',monospace;
+}
+
+/* ═══════════════ FAQ ═══════════════ */
+#faq{
+  padding:120px 52px;
+  background:var(--bg);
+  position:relative;z-index:1;
+}
+
+.faq-wrap{
+  display:grid;grid-template-columns:1fr 1.4fr;
+  gap:80px;align-items:start;
+}
+
+.faq-left .sec-title{margin-bottom:24px;}
+.faq-left p{font-size:15px;color:var(--txt2);line-height:1.8;margin-bottom:32px;}
+
+.faq-list{display:flex;flex-direction:column;gap:1px;}
+
+.faq-item{
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+}
+.faq-item:first-child{border-top:1px solid var(--border);}
+
+.faq-q{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:22px 0;cursor:none;gap:20px;
+  font-size:15px;font-weight:600;color:var(--txt);
+  transition:color 0.3s;
+}
+.faq-q:hover{color:var(--g1);}
+.faq-icon{
+  width:24px;height:24px;flex-shrink:0;
+  border:1px solid var(--border2);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--g1);font-size:16px;
+  transition:transform 0.4s,background 0.3s;
+}
+.faq-item.open .faq-icon{transform:rotate(45deg);background:rgba(0,255,135,0.1);}
+.faq-item.open .faq-q{color:var(--g1);}
+
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.45s cubic-bezier(0.23,1,0.32,1);
+}
+.faq-a p{
+  padding:0 0 22px;font-size:14px;
+  color:var(--txt2);line-height:1.8;
+}
+.faq-item.open .faq-a{max-height:200px;}
+
+/* ═══════════════ STATS ═══════════════ */
+#stats{
+  padding:80px 52px;
+  background:var(--s2);
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+
+.stats-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  max-width:900px;margin:0 auto;
+}
+
+.stat-item{
+  text-align:center;padding:40px 20px;
+  position:relative;
+}
+.stat-item:not(:last-child)::after{
+  content:'';position:absolute;
+  top:20%;right:0;bottom:20%;
+  width:1px;background:var(--border2);
+}
+.stat-val{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:58px;font-weight:800;
+  color:var(--g1);
+  text-shadow:0 0 40px rgba(0,255,135,0.3);
+  line-height:1;margin-bottom:10px;
+  letter-spacing:-2px;
+}
+.stat-lbl{font-size:14px;color:var(--txt2);}
+.stat-item:hover .stat-val{
+  text-shadow:0 0 60px rgba(0,255,135,0.5);
+}
+
+/* ═══════════════ CASE STUDIES ═══════════════ */
+#cases{
+  padding:120px 52px;
+  background:var(--s1);
+  position:relative;z-index:1;
+}
+
+.cases-layout{
+  display:grid;grid-template-columns:1fr 1.6fr;
+  gap:60px;align-items:start;
+}
+.cases-left{}
+.cases-left .sec-title{margin-bottom:16px;}
+.cases-left p{font-size:15px;color:var(--txt2);line-height:1.8;margin-bottom:32px;}
+
+.cases-stack{display:flex;flex-direction:column;gap:16px;}
+
+.cs-card{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:12px;padding:28px 28px 24px;
+  transition:all 0.4s cubic-bezier(0.23,1,0.32,1);
+  position:relative;overflow:hidden;
+}
+.cs-card::after{
+  content:'';position:absolute;
+  left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(180deg,var(--g1),var(--g3));
+  opacity:0;transition:opacity 0.4s;
+}
+.cs-card:hover{
+  border-color:rgba(0,255,135,0.15);
+  transform:translateX(-4px);
+  box-shadow:4px 0 0 var(--g1);
+}
+.cs-card:hover::after{opacity:1;}
+
+.cs-top{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:14px;
+}
+.cs-logo{
+  width:28px;height:28px;
+  background:linear-gradient(135deg,var(--g4),var(--g3));
+  border-radius:6px;display:flex;
+  align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:var(--g1);
+  font-family:'IBM Plex Mono',monospace;
+}
+.cs-brand{font-size:12px;color:var(--g1);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.cs-tag2{
+  margin-right:auto;font-size:9px;
+  letter-spacing:2px;color:var(--txt3);
+  font-family:'IBM Plex Mono',monospace;
+}
+
+.cs-card h3{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:18px;font-weight:700;color:var(--txt);
+  margin-bottom:10px;line-height:1.3;
+}
+.cs-card p{font-size:13px;color:var(--txt2);line-height:1.7;margin-bottom:18px;}
+.cs-link{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--g1);text-decoration:none;
+  letter-spacing:0.5px;transition:gap 0.3s;
+}
+.cs-link:hover{gap:14px;}
+.cs-link::after{content:'→';}
+
+/* CS decorative element */
+.cs-deco{
+  position:absolute;bottom:-20px;right:-20px;
+  width:120px;height:120px;
+  background:radial-gradient(circle,rgba(0,255,135,0.06),transparent 70%);
+  border-radius:50%;pointer-events:none;
+}
+
+/* ═══════════════ API CTA ═══════════════ */
+#api-section{
+  padding:120px 52px;
+  background:var(--bg);
+  position:relative;z-index:1;overflow:hidden;
+}
+#api-section::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,255,135,0.04),transparent);
+}
+
+.api-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+}
+.api-left .sec-title{margin-bottom:20px;}
+.api-left p{font-size:15px;color:var(--txt2);line-height:1.8;margin-bottom:36px;}
+.api-btns{display:flex;gap:12px;flex-wrap:wrap;}
+
+.code-block{
+  background:var(--s2);
+  border:1px solid rgba(0,255,135,0.12);
+  border-radius:14px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,0.4);
+}
+.code-header{
+  display:flex;align-items:center;gap:8px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,0.2);
+}
+.code-header-dot{width:10px;height:10px;border-radius:50%;}
+.code-filename{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--txt3);
+  margin-right:auto;letter-spacing:1px;
+}
+.code-lang{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px;color:var(--g3);
+  background:rgba(0,255,135,0.06);
+  padding:2px 8px;border-radius:3px;letter-spacing:1px;
+}
+pre{
+  padding:24px 24px 28px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:13px;line-height:1.7;
+  overflow-x:auto;
+}
+.c-g{color:var(--g1);}
+.c-y{color:#ffd866;}
+.c-b{color:#82aaff;}
+.c-p{color:#c792ea;}
+.c-cm{color:var(--txt3);}
+.c-w{color:var(--txt);}
+
+/* ═══════════════ FOOTER ═══════════════ */
+footer{
+  background:var(--s1);
+  border-top:1px solid var(--border);
+  position:relative;z-index:1;
+}
+.footer-main{
+  display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;
+  gap:40px;padding:64px 52px 48px;
+}
+.footer-brand{}
+.footer-logo-txt{
+  font-family:'Bricolage Grotesque',sans-serif;
+  font-size:24px;font-weight:800;color:var(--g1);
+  letter-spacing:3px;text-shadow:0 0 20px rgba(0,255,135,0.4);
+  margin-bottom:14px;display:block;
+  text-decoration:none;
+}
+.footer-desc{font-size:14px;color:var(--txt3);line-height:1.7;max-width:220px;}
+.footer-col h4{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:2px;color:var(--txt3);
+  margin-bottom:20px;
+}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:12px;}
+.footer-col a{
+  font-size:14px;color:var(--txt2);text-decoration:none;
+  transition:color 0.3s;
+}
+.footer-col a:hover{color:var(--g1);}
+
+.footer-bottom{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 52px;
+  border-top:1px solid var(--border);
+  flex-wrap:wrap;gap:12px;
+}
+.footer-copy{font-size:12px;color:var(--txt3);font-family:'IBM Plex Mono',monospace;}
+.footer-legal{
+  display:flex;gap:20px;
+}
+.footer-legal span{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:2px;color:rgba(0,255,135,0.15);
+}
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(28px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.rev{opacity:0;transform:translateY(32px);transition:opacity 0.8s cubic-bezier(0.23,1,0.32,1),transform 0.8s cubic-bezier(0.23,1,0.32,1);}
+.rev.vis{opacity:1;transform:translateY(0);}
+.rev-l{opacity:0;transform:translateX(-32px);transition:opacity 0.8s cubic-bezier(0.23,1,0.32,1),transform 0.8s cubic-bezier(0.23,1,0.32,1);}
+.rev-l.vis{opacity:1;transform:translateX(0);}
+
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media(max-width:960px){
+  nav{padding:0 24px;}
+  .nav-links{display:none;}
+  #hero,#features,#faq,#stats,#cases,#api-section{padding-left:24px;padding-right:24px;}
+  .feat-grid{grid-template-columns:1fr;}
+  .faq-wrap{grid-template-columns:1fr;}
+  .cases-layout{grid-template-columns:1fr;}
+  .api-grid{grid-template-columns:1fr;}
+  .footer-main{grid-template-columns:1fr 1fr;padding:40px 24px;}
+  .footer-bottom{padding:16px 24px;}
+  .logos-bar{padding:24px;}
+  .mockup-body{grid-template-columns:1fr;}
+  .mockup-sidebar{display:none;}
+  .stats-grid{grid-template-columns:1fr;max-width:300px;}
+  .stat-item:not(:last-child)::after{display:none;}
+  .stat-item{border-bottom:1px solid var(--border);}
+}
+/* ═══════════════ RESPONSIVE ═══════════════ */
+@media(max-width:960px){
+  nav{padding:0 24px;}
+  .nav-links{display:none;}
+  #hero,#features,#faq,#stats,#cases,#deepseek-section,#image-gen{padding-left:24px;padding-right:24px;}
+  .feat-grid{grid-template-columns:1fr;}
+  .faq-wrap{grid-template-columns:1fr;}
+  .cases-layout{grid-template-columns:1fr;}
+  .deepseek-grid, .image-grid{grid-template-columns:1fr;}
+  .footer-main{grid-template-columns:1fr 1fr;padding:40px 24px;}
+  .footer-bottom{padding:16px 24px;}
+  .logos-bar{padding:24px;}
+  .mockup-body{grid-template-columns:1fr;}
+  .mockup-sidebar{display:none;}
+  .stats-grid{grid-template-columns:1fr;max-width:300px;}
+  .stat-item:not(:last-child)::after{display:none;}
+  .stat-item{border-bottom:1px solid var(--border);}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+<div class="mesh"></div>
+<div class="noise"></div>
+<div id="prog"></div>
+
+<!-- ═══ NAV ═══ -->
+<nav id="nav">
+  <a href="#" class="logo">JIMMY</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#cases">Case Studies</a></li>
+    <li><a href="#api-section">API</a></li>
+  </ul>
+  <div class="nav-r">
+    <span class="nav-badge">Welcome, Adam</span>
+    <a href="http://localhost:3001/" class="btn btn-p">Get started</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero" id="about">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+
+  <div class="hero-pill">
+    <div class="pill-dot"></div>
+    v2.0 — الآن أسرع وأذكى
+  </div>
+
+  <h1>
+    <span class="h1-line1">طوّر مشاريعك</span>
+    <span class="h1-line2">بالذكاء الاصطناعي</span>
+  </h1>
+
+  <p class="hero-sub">
+    JIMMY يساعدك على بناء تجارب ذكاء اصطناعي مذهلة — توقع النتائج، خصص الموارد، وحلّل الأداء، كل ذلك عبر API واحد بسيط وقوي.
+  </p>
+
+  <div class="hero-btns">
+    <a href="http://localhost:3001/" class="btn btn-p">ابدأ مجانًا</a>
+    <a href="#features" class="btn btn-o">اعرف أكثر</a>
+  </div>
+
+  <!-- DASHBOARD MOCKUP -->
+  <div class="mockup-wrap">
+    <div class="mockup-bar">
+      <div class="m-dot md1"></div>
+      <div class="m-dot md2"></div>
+      <div class="m-dot md3"></div>
+      <span class="mockup-title">jimmy.ai — dashboard</span>
+    </div>
+    <div class="mockup-body">
+      <div class="mockup-sidebar">
+        <div class="sb-item active"><span class="sb-icon">⊞</span> Dashboard</div>
+        <div class="sb-item"><span class="sb-icon">◈</span> Projects</div>
+        <div class="sb-item"><span class="sb-icon">◉</span> AI Models</div>
+        <div class="sb-item"><span class="sb-icon">⌘</span> API Keys</div>
+        <div class="sb-item"><span class="sb-icon">◌</span> Analytics</div>
+      </div>
+      <div class="mockup-content">
+        <div class="mc-head">
+          <div>
+            <div class="mc-title">Welcome back, Adam!</div>
+            <div class="mc-sub">4 active projects · 2 alerts</div>
+          </div>
+          <button class="mc-btn">+ New project</button>
+        </div>
+        <div class="task-row">
+          <div class="task-info">
+            <div class="task-name">Website AI Integration</div>
+            <div class="task-meta">5 contributors · due in 3d</div>
+          </div>
+          <div class="task-tags">
+            <span class="tag tag-g">ON TRACK</span>
+            <div class="task-ring">
+              <svg class="ring-svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle class="ring-bg" cx="16" cy="16" r="12"/>
+                <circle class="ring-fg" cx="16" cy="16" r="12" stroke="#00ff87" stroke-dasharray="75.4" stroke-dashoffset="19"/>
+              </svg>
+              <div class="ring-pct">75%</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-info">
+            <div class="task-name">Dashboard Development</div>
+            <div class="task-meta">3 contributors · due in 7d</div>
+          </div>
+          <div class="task-tags">
+            <span class="tag tag-y">IN REVIEW</span>
+            <div class="task-ring">
+              <svg class="ring-svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle class="ring-bg" cx="16" cy="16" r="12"/>
+                <circle class="ring-fg" cx="16" cy="16" r="12" stroke="#ffc800" stroke-dasharray="75.4" stroke-dashoffset="38"/>
+              </svg>
+              <div class="ring-pct">50%</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-row">
+          <div class="task-info">
+            <div class="task-name">AI Model Training</div>
+            <div class="task-meta">2 contributors · due in 1d</div>
+          </div>
+          <div class="task-tags">
+            <span class="tag tag-r">AT RISK</span>
+            <div class="task-ring">
+              <svg class="ring-svg" width="32" height="32" viewBox="0 0 32 32">
+                <circle class="ring-bg" cx="16" cy="16" r="12"/>
+                <circle class="ring-fg" cx="16" cy="16" r="12" stroke="#ff6060" stroke-dasharray="75.4" stroke-dashoffset="57"/>
+              </svg>
+              <div class="ring-pct">25%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LOGOS ═══ -->
+<div class="logos-bar">
+  <div class="logos-track">
+    <div class="logo-item">◈ NeuralCorp</div>
+    <div class="logo-item">⬡ DataStream</div>
+    <div class="logo-item">⌬ Synapse AI</div>
+    <div class="logo-item">◎ Vertex Labs</div>
+    <div class="logo-item">⧫ Mindflow</div>
+    <div class="logo-item">◈ NeuralCorp</div>
+    <div class="logo-item">⬡ DataStream</div>
+    <div class="logo-item">⌬ Synapse AI</div>
+    <div class="logo-item">◎ Vertex Labs</div>
+    <div class="logo-item">⧫ Mindflow</div>
+  </div>
+</div>
+
+<!-- ═══ FEATURES ═══ -->
+<section id="features">
+  <div class="sec-badge rev">FEATURES</div>
+  <h2 class="sec-title rev">AI يُعظّم إنتاجيتك</h2>
+  <p class="sec-sub rev">ثلاث مراحل أساسية يستخدمها JIMMY لتسريع تسليم مشاريعك ورفع كفاءتك.</p>
+
+  <div class="feat-grid">
+    <!-- Card 1 -->
+    <div class="feat-card rev">
+      <div class="feat-preview">
+        <div class="preview-forecast">
+          <div class="pf-label">Timeline Forecast</div>
+          <div class="pf-bar"><div class="pf-bar-inner" style="width:85%"></div></div>
+          <div class="pf-label">Resource Load</div>
+          <div class="pf-bar"><div class="pf-bar-inner" style="width:62%"></div></div>
+          <div class="pf-label">Risk Level</div>
+          <div class="pf-bar"><div class="pf-bar-inner" style="width:23%;background:linear-gradient(90deg,#00c96b,#ffc800)"></div></div>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-num">01 — FORECAST</div>
+        <h3>Forecast</h3>
+        <p>احصل على وضوح تام بشأن جداول المشاريع عبر البيانات الفورية والتنبؤات الذكية، وتعرّف على التأخيرات مبكرًا.</p>
+        <a href="#" class="feat-link">اعرف أكثر</a>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="feat-card rev">
+      <div class="feat-preview">
+        <div class="preview-allocate">
+          <div class="pa-row">
+            <div class="pa-avatar">A</div>
+            <div class="pa-load"><div class="pa-load-inner l-g" style="width:78%"></div></div>
+            <div class="pa-pct">78%</div>
+          </div>
+          <div class="pa-row">
+            <div class="pa-avatar" style="background:linear-gradient(135deg,#005c2e,#009e52)">B</div>
+            <div class="pa-load"><div class="pa-load-inner l-y" style="width:55%"></div></div>
+            <div class="pa-pct">55%</div>
+          </div>
+          <div class="pa-row">
+            <div class="pa-avatar" style="background:linear-gradient(135deg,#2d4a35,#00c96b)">C</div>
+            <div class="pa-load"><div class="pa-load-inner l-r" style="width:91%"></div></div>
+            <div class="pa-pct">91%</div>
+          </div>
+          <div class="pa-row">
+            <div class="pa-avatar" style="background:linear-gradient(135deg,#003d20,#00ff87)">D</div>
+            <div class="pa-load"><div class="pa-load-inner l-g" style="width:43%"></div></div>
+            <div class="pa-pct">43%</div>
+          </div>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-num">02 — ALLOCATE</div>
+        <h3>Allocate</h3>
+        <p>وزّع المهام تلقائيًا بناءً على طاقة الفريق ومهاراته، وحسّن قرارات التوزيع لتحقيق أقصى كفاءة.</p>
+        <a href="#" class="feat-link">اعرف أكثر</a>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="feat-card rev">
+      <div class="feat-preview">
+        <div class="preview-analyze" id="chartBars">
+          <div class="pa-col" style="height:40%"></div>
+          <div class="pa-col" style="height:65%"></div>
+          <div class="pa-col" style="height:45%"></div>
+          <div class="pa-col" style="height:80%"></div>
+          <div class="pa-col" style="height:55%"></div>
+          <div class="pa-col" style="height:70%"></div>
+          <div class="pa-col" style="height:90%"></div>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-num">03 — ANALYZE</div>
+        <h3>Analyze</h3>
+        <p>تتبع الأداء وتصوير الرؤى بلوحات ديناميكية. استخدم التحليلات الفورية لتطوير استراتيجياتك.</p>
+        <a href="#" class="feat-link">اعرف أكثر</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ IMAGE GENERATION SECTION ═══ -->
+<section id="image-gen">
+  <div class="image-grid">
+    <div class="image-left rev-l">
+      <div class="sec-badge">DEEPSEEK VISION</div>
+      <h2 class="sec-title">توليد الصور بالذكاء الاصطناعي</h2>
+      <p>حوّل النصوص إلى صور مذهلة باستخدام DeepSeek Vision. سواء كنت مصمم، مطور، أو صانع محتوى، أدواتنا تمنحك إبداعاً بلا حدود.</p>
+      
+      <div class="prompt-demo">
+        <div class="prompt-text">"منظر غروب فوق جبال مغربية، ألوان دافئة، تفاصيل عالية، بأسلوب فني واقعي"</div>
+        <div class="prompt-result">
+          <span class="result-badge">✅ تم التوليد</span>
+          <span class="result-badge">🎨 1024x1024</span>
+          <span class="result-badge">⚡ 3 ثوانٍ</span>
+        </div>
+      </div>
+      
+      <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:rgba(139,92,246,0.05); padding:4px 10px; border-radius:100px;">#واقعي</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:rgba(139,92,246,0.05); padding:4px 10px; border-radius:100px;">#كرتوني</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:rgba(139,92,246,0.05); padding:4px 10px; border-radius:100px;">#ثلاثي_الأبعاد</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:rgba(139,92,246,0.05); padding:4px 10px; border-radius:100px;">#انمي</span>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; background:rgba(139,92,246,0.05); padding:4px 10px; border-radius:100px;">#مائي</span>
+      </div>
+      
+      <div style="margin-top:32px;">
+        <a href="#" class="btn btn-p">جرب توليد صورة</a>
+      </div>
+    </div>
+    
+    <div class="image-showcase rev">
+      <svg width="100%" height="200" viewBox="0 0 300 200" style="background:linear-gradient(135deg, #2d1b4e, #1a1a2e); border-radius:8px;">
+        <circle cx="100" cy="80" r="30" fill="#8b5cf6" opacity="0.6" />
+        <circle cx="200" cy="100" r="40" fill="#7c3aed" opacity="0.5" />
+        <circle cx="150" cy="140" r="50" fill="#6d28d9" opacity="0.4" />
+        <rect x="120" y="30" width="60" height="10" fill="#a78bfa" rx="5" />
+        <rect x="80" y="160" width="140" height="8" fill="#c4b5fd" rx="4" />
+        <text x="30" y="40" fill="white" font-size="8" font-family="monospace">توليد فوري</text>
+        <text x="200" y="180" fill="white" font-size="8" font-family="monospace">جودة 4K</text>
+      </svg>
+      <div class="image-caption">نموذج "منظر غروب فوق جبال مغربية" تم توليده بواسطة DeepSeek Vision</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq">
+  <div class="faq-wrap">
+    <div class="faq-left rev-l">
+      <div class="sec-badge">FAQ</div>
+      <h2 class="sec-title">أسئلة وإجابات</h2>
+      <p>كل ما تحتاج معرفته عن JIMMY وكيفية استخدام الـ API في مشاريعك.</p>
+      <a href="http://localhost:3001/" class="btn btn-p">ابدأ الآن</a>
+    </div>
+    <div class="faq-list rev">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>ما هو JIMMY وكيف يختلف عن باقي منصات AI؟</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <p>JIMMY منصة ذكاء اصطناعي متخصصة تجمع بين قوة LLMs وسهولة التكامل عبر API. نركز على نتائج دقيقة ومخصصة دون تعقيدات تقنية، مع دعم كامل للغة العربية.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>كيف أدمج JIMMY API في مشروعي؟</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <p>سجّل حساب، احصل على API Key، وابدأ باستدعاء endpoints خلال دقائق. لدينا مكتبات لـ Python, JavaScript, PHP مع وثائق شاملة.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>هل فيه باقة مجانية؟</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <p>نعم! 1000 طلب مجاني شهرياً. للمشاريع الكبيرة، باقات مدفوعة مرنة تبدأ من $9 شهرياً مع unlimited requests.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>ما النماذج (Models) المتاحة؟</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <p>GPT-4، Claude، Gemini، وLlama مفتوح المصدر. تبديل بين النماذج بسطر واحد من الكود.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <span>هل بياناتي آمنة؟</span>
+          <div class="faq-icon">+</div>
+        </div>
+        <div class="faq-a">
+          <p>تشفير AES-256 كامل، لا نخزن بياناتك الحساسة، ملتزمون بـ SOC 2 و GDPR. بياناتك ملكك وحدك.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATS ═══ -->
+<section id="stats">
+  <div class="stats-grid">
+    <div class="stat-item rev">
+      <div class="stat-val" data-target="15">0</div>
+      <div class="stat-lbl">k+ فريق يستخدم المنصة</div>
+    </div>
+    <div class="stat-item rev">
+      <div class="stat-val" data-target="200">0</div>
+      <div class="stat-lbl">k+ مشروع مكتمل</div>
+    </div>
+    <div class="stat-item rev">
+      <div class="stat-val" data-target="500">0</div>
+      <div class="stat-lbl">$M+ ميزانيات تحت الإدارة</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CASE STUDIES ═══ -->
+<section id="cases">
+  <div class="cases-layout">
+    <div class="cases-left rev-l">
+      <div class="sec-badge">CASE STUDIES</div>
+      <h2 class="sec-title">كيف ساعد JIMMY الآخرين</h2>
+      <p>أمثلة حقيقية على كيفية تحسين JIMMY لأداء الفرق وتسريع القرارات.</p>
+      <a href="#" class="btn btn-o">جميع الحالات</a>
+    </div>
+    <div class="cases-stack rev">
+      <!-- Case 2 first (reversed per request) -->
+      <div class="cs-card">
+        <div class="cs-deco"></div>
+        <div class="cs-top">
+          <div class="cs-logo">LG</div>
+          <span class="cs-brand">LogiGroup</span>
+          <span class="cs-tag2">CASE STUDY</span>
+        </div>
+        <h3>خفّضت هدر الموارد بنسبة 35%</h3>
+        <p>كيف قلّصت شركة لوجستية هدر مواردها بنسبة 35% عبر التوزيع الذكي والتتبع الفوري باستخدام JIMMY AI.</p>
+        <a href="#" class="cs-link">اعرف التفاصيل</a>
+      </div>
+      <!-- Case 1 second -->
+      <div class="cs-card">
+        <div class="cs-deco"></div>
+        <div class="cs-top">
+          <div class="cs-logo">SW</div>
+          <span class="cs-brand">SoftWave</span>
+          <span class="cs-tag2">CASE STUDY</span>
+        </div>
+        <h3>قرارات أسرع بنسبة 20%</h3>
+        <p>كيف حققت شركة برمجيات سرعة 20% أعلى في اتخاذ القرارات باستخدام تحليلات JIMMY المدعومة بالذكاء الاصطناعي.</p>
+        <a href="#" class="cs-link">اعرف التفاصيل</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ API CTA ═══ -->
+<section id="api-section">
+  <div class="api-grid">
+    <div class="api-left rev-l">
+      <div class="sec-badge">API</div>
+      <h2 class="sec-title">ادمج الذكاء الاصطناعي في دقائق</h2>
+      <p>API بسيط وقوي يتيح لك بناء تطبيقات AI متطورة بكود أقل وكفاءة أعلى. يدعم Python، JavaScript، وأكثر.</p>
+      <div class="api-btns">
+        <a href="#" class="btn btn-p">احصل على API Key</a>
+        <a href="#" class="btn btn-o">الوثائق</a>
+      </div>
+    </div>
+    <div class="code-block rev">
+      <div class="code-header">
+        <div class="code-header-dot" style="background:#ff5f57"></div>
+        <div class="code-header-dot" style="background:#febc2e"></div>
+        <div class="code-header-dot" style="background:#28c840"></div>
+        <span class="code-filename">example.js</span>
+        <span class="code-lang">JAVASCRIPT</span>
+      </div>
+      <pre><span class="c-cm">// تكامل JIMMY AI في ثوانٍ</span>
+<span class="c-p">import</span> <span class="c-g">jimmy</span> <span class="c-p">from</span> <span class="c-y">'@jimmy/sdk'</span><span class="c-w">;</span>
+
+<span class="c-p">const</span> <span class="c-g">client</span> <span class="c-w">=</span> <span class="c-p">new</span> <span class="c-b">jimmy</span><span class="c-w">({</span>
+  <span class="c-g">apiKey</span><span class="c-w">:</span> <span class="c-y">process.env.JIMMY_KEY</span>
+<span class="c-w">});</span>
+
+<span class="c-p">const</span> <span class="c-g">res</span> <span class="c-w">=</span> <span class="c-p">await</span> client
+  .<span class="c-b">chat</span>.<span class="c-b">complete</span><span class="c-w">({</span>
+    <span class="c-g">model</span><span class="c-w">:</span>   <span class="c-y">'jimmy-pro-v2'</span><span class="c-w">,</span>
+    <span class="c-g">message</span><span class="c-w">:</span> <span class="c-y">'حلّل هذا المشروع'</span><span class="c-w">,</span>
+    <span class="c-g">lang</span><span class="c-w">:</span>    <span class="c-y">'ar'</span>
+  <span class="c-w">});</span>
+
+<span class="c-cm">// ✅ { content: "...", tokens: 142 }</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-main">
+    <div class="footer-brand">
+      <a href="#" class="footer-logo-txt">JIMMY</a>
+      <p class="footer-desc">منصة الذكاء الاصطناعي التي تساعدك على بناء تجارب مذهلة بسرعة وكفاءة.</p>
+    </div>
+    <div class="footer-col">
+      <h4>PRODUCT</h4>
+      <ul>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">Pricing</a></li>
+        <li><a href="#">API Docs</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>COMPANY</h4>
+      <ul>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>LEGAL</h4>
+      <ul>
+        <li><a href="#">Privacy</a></li>
+        <li><a href="#">Terms</a></li>
+        <li><a href="#">Security</a></li>
+        <li><a href="#">Cookies</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 JIMMY AI — All rights reserved</span>
+    <div class="footer-legal">
+      <span>LEGAL TERMS</span>
+      <span>LEGAL TERMS</span>
+      <span>LEGAL TERMS</span>
+      <span>LEGAL TERMS</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+});
+function animRing(){
+  rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+// Scroll progress + nav
+window.addEventListener('scroll',()=>{
+  const p=(scrollY/(document.body.scrollHeight-innerHeight))*100;
+  document.getElementById('prog').style.width=p+'%';
+  document.getElementById('nav').classList.toggle('s',scrollY>40);
+});
+
+// Reveal on scroll
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach((e,i)=>{
+    if(e.isIntersecting) setTimeout(()=>e.target.classList.add('vis'),i*100);
+  });
+},{threshold:0.1});
+document.querySelectorAll('.rev,.rev-l').forEach(el=>obs.observe(el));
+
+// FAQ
+function toggleFaq(el){
+  const item=el.parentElement;
+  const open=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!open) item.classList.add('open');
+}
+
+// Counter animation
+function animCount(el){
+  const target=parseInt(el.dataset.target);
+  const suffix=el.nextElementSibling?.textContent.includes('$')?'':'';
+  let start=0;
+  const step=target/60;
+  const timer=setInterval(()=>{
+    start+=step;
+    if(start>=target){start=target;clearInterval(timer);}
+    el.textContent=Math.round(start);
+  },25);
+}
+const statObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      animCount(e.target);
+      statObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.5});
+document.querySelectorAll('[data-target]').forEach(el=>statObs.observe(el));
+
+// Animate chart bars on scroll
+const chartObs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.pa-col').forEach((col,i)=>{
+        const h=col.style.height;
+        col.style.height='0%';
+        setTimeout(()=>{col.style.height=h;col.style.transition='height 0.6s cubic-bezier(0.23,1,0.32,1)';},i*80);
+      });
+      chartObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.3});
+const cb=document.getElementById('chartBars');
+if(cb) chartObs.observe(cb);
+</script>
+</body>
+</html>

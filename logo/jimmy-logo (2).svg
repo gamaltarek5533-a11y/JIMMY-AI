@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#0f2219"/>
+      <stop offset="100%" stop-color="#050a07"/>
+    </radialGradient>
+    <linearGradient id="jg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff87"/>
+      <stop offset="100%" stop-color="#00a854"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff87" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00ff87" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softglow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="100" height="100" rx="24" fill="url(#bg)"/>
+
+  <!-- Subtle inner glow -->
+  <rect width="100" height="100" rx="24" fill="none"
+    stroke="url(#stroke)" stroke-width="1.5"/>
+
+  <!-- Green glow blob behind J -->
+  <ellipse cx="50" cy="52" rx="28" ry="26"
+    fill="#00ff87" opacity="0.04" filter="url(#softglow)"/>
+
+  <!-- J letter -->
+  <text x="52" y="70"
+    font-family="'Georgia', 'Times New Roman', serif"
+    font-size="65"
+    font-weight="900"
+    text-anchor="middle"
+    fill="url(#jg)"
+    filter="url(#glow)">J</text>
+
+  <!-- Live indicator dot -->
+  <circle cx="79" cy="21" r="5" fill="#050a07"/>
+  <circle cx="79" cy="21" r="3.5" fill="#00ff87" filter="url(#glow)">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="3.5;4.5;3.5" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

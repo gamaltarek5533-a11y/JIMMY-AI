@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JIMMY AI</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0a0a0a;--sidebar:#111;--card:#1a1a1a;--border:#2a2a2a;--green:#00ff87;--green2:#00cc6a;--text:#eee;--muted:#888}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;overflow:hidden}
+
+  /* AUTH */
+  #auth{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+  .auth-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:360px;text-align:center}
+  .auth-box h1{color:var(--green);font-size:2rem;margin-bottom:8px}
+  .auth-box p{color:var(--muted);margin-bottom:28px}
+  .auth-tabs{display:flex;margin-bottom:24px;border-bottom:1px solid var(--border)}
+  .auth-tab{flex:1;padding:10px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem}
+  .auth-tab.active{color:var(--green);border-bottom:2px solid var(--green)}
+  .auth-box input{width:100%;padding:12px 16px;background:#222;border:1px solid var(--border);border-radius:10px;color:var(--text);margin-bottom:12px;font-size:.95rem;direction:ltr}
+  .auth-box input:focus{outline:none;border-color:var(--green)}
+  .auth-btn{width:100%;padding:13px;background:var(--green);color:#000;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:.2s}
+  .auth-btn:hover{background:var(--green2)}
+  .auth-err{color:#ff5555;font-size:.85rem;margin-top:8px}
+
+  /* LAYOUT */
+  #sidebar{width:260px;background:var(--sidebar);border-left:1px solid var(--border);display:flex;flex-direction:column;height:100vh}
+  #main{flex:1;display:flex;flex-direction:column;height:100vh}
+
+  /* SIDEBAR */
+  .sb-header{padding:16px;border-bottom:1px solid var(--border)}
+  .sb-header h2{color:var(--green);font-size:1.3rem}
+  .sb-user{font-size:.8rem;color:var(--muted);margin-top:4px}
+  .new-chat-btn{margin:12px;padding:10px;background:var(--green);color:#000;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:.9rem;transition:.2s}
+  .new-chat-btn:hover{background:var(--green2)}
+  .chats-list{flex:1;overflow-y:auto;padding:8px}
+  .chat-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;font-size:.88rem;color:var(--muted);transition:.15s;display:flex;justify-content:space-between;align-items:center}
+  .chat-item:hover{background:var(--card);color:var(--text)}
+  .chat-item.active{background:var(--card);color:var(--green)}
+  .chat-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .del-btn{background:none;border:none;color:#555;cursor:pointer;padding:2px 6px;border-radius:4px;font-size:.9rem}
+  .del-btn:hover{color:#ff5555}
+  .sb-footer{padding:12px;border-top:1px solid var(--border)}
+  .logout-btn{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:.88rem}
+  .logout-btn:hover{border-color:#ff5555;color:#ff5555}
+
+  /* CHAT */
+  .chat-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+  .chat-header h3{color:var(--green);font-size:1.1rem}
+  .messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+  .msg{display:flex;gap:12px;max-width:85%}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse}
+  .avatar img{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+  .msg.user .avatar img{background:var(--green);color:#000;font-weight:700}
+  .msg.ai .avatar img{background:#1a2a1a;border:1px solid var(--green);color:var(--green)}
+  .bubble{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-size:.93rem;line-height:1.7}
+  .msg.user .bubble{background:#1a2a1a;border-color:var(--green)}
+  .bubble pre{background:#0d0d0d;border:1px solid var(--border);border-radius:8px;padding:12px;margin:10px 0;overflow-x:auto;position:relative}
+  .bubble code{font-family:'Courier New',monospace;font-size:.85rem;color:#a8ff78}
+  .copy-btn{position:absolute;top:8px;left:8px;background:#222;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:3px 10px;font-size:.78rem;cursor:pointer}
+  .copy-btn:hover{background:var(--green);color:#000}
+  .bubble img{max-width:100%;border-radius:10px;margin-top:8px;cursor:pointer}
+  .typing{display:flex;gap:5px;padding:12px 16px;align-items:center}
+  .dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:bounce .8s infinite}
+  .dot:nth-child(2){animation-delay:.15s}
+  .dot:nth-child(3){animation-delay:.3s}
+  @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+
+  /* INPUT */
+  .input-area{padding:16px 20px;border-top:1px solid var(--border)}
+  .attachments{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .att-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:.82rem;color:var(--green);display:flex;align-items:center;gap:6px}
+  .att-remove{background:none;border:none;color:#ff5555;cursor:pointer;font-size:1rem}
+  .input-row{display:flex;gap:10px;align-items:flex-end}
+  .input-row textarea{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-size:.95rem;resize:none;min-height:48px;max-height:160px;font-family:inherit;direction:rtl}
+  .input-row textarea:focus{outline:none;border-color:var(--green)}
+  .input-btns{display:flex;gap:8px}
+  .icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .icon-btn:hover{border-color:var(--green);color:var(--green)}
+  .send-btn{width:44px;height:44px;border-radius:10px;border:none;background:var(--green);color:#000;cursor:pointer;font-size:1.3rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .send-btn:hover{background:var(--green2)}
+  .send-btn:disabled{opacity:.4;cursor:not-allowed}
+  #fileInput{display:none}
+
+  /* WELCOME */
+  .welcome{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:var(--muted)}
+  .welcome h2{color:var(--green);font-size:2rem}
+  .welcome p{font-size:1rem}
+  .suggestions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:500px}
+  .sug{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;cursor:pointer;font-size:.88rem;transition:.2s}
+  .sug:hover{border-color:var(--green);color:var(--green)}
+
+  /* LIGHTBOX */
+  #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:999;align-items:center;justify-content:center}
+  #lightbox.show{display:flex}
+  #lightbox img{max-width:90vw;max-height:90vh;border-radius:12px}
+  #lightbox-close{position:fixed;top:20px;right:20px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:1.2rem}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+</style>
+<link rel="stylesheet" href="responsive.css">
+<link rel="icon" href="logo/icon.png">
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-box">
+    <h1>⚡ JIMMY</h1>
+    <p>مساعد الذكاء الاصطناعي</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">تسجيل الدخول</button>
+      <button class="auth-tab" onclick="switchTab('register')">حساب جديد</button>
+    </div>
+    <div id="login-form">
+      <input type="email" id="login-email" placeholder="البريد الإلكتروني" />
+      <input type="password" id="login-pass" placeholder="كلمة المرور" />
+      <button class="auth-btn" onclick="login()">دخول</button>
+    </div>
+    <div id="register-form" style="display:none">
+      <input type="text" id="reg-name" placeholder="الاسم" />
+      <input type="email" id="reg-email" placeholder="البريد الإلكتروني" />
+      <input type="password" id="reg-pass" placeholder="كلمة المرور (6 أحرف+)" />
+      <button class="auth-btn" onclick="register()">إنشاء حساب</button>
+    </div>
+    <div id="auth-err" class="auth-err"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-header">
+    <h2>⚡ JIMMY AI</h2>
+    <div class="sb-user" id="sb-user"></div>
+  </div>
+  <button class="new-chat-btn" onclick="newChat()"><img src="logo/jimmy-logo (2).svg" alt="JIMMY" style="width:20px;height:20px;margin-left:8px;"> محادثة جديدة</button>
+  <div class="chats-list" id="chats-list"></div>
+  <div class="sb-footer">
+    <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="chat-header">
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <button id="menu-btn" onclick="toggleSidebar()" 
+  style="display:none;background:none;border:none;color:var(--green);font-size:1.4rem;cursor:pointer;margin-left:8px">☰</button>
+    <div class="avatar" ><img src="logo/jimmy-logo .svg" alt="JIMMY" style="width:60px;height:60px;margin-left:8px;"></div>
+    <div>
+      <h3 id="chat-title">JIMMY AI</h3>
+      <div style="font-size:.8rem;color:var(--muted)">Powered by Groq Llama 3.3 70B</div>
+    </div>
+  </div>
+
+  <div id="messages" class="messages">
+    <div class="welcome" id="welcome">
+      <h2>⚡ JIMMY AI</h2>
+      <p>مساعدك الذكي — اسألني أي حاجة!</p>
+      <div class="suggestions">
+        <div class="sug" onclick="suggest('اشرح لي مفهوم الـ API')">🔌 اشرح الـ API</div>
+        <div class="sug" onclick="suggest('اكتب لي كود Python لقراءة ملف CSV')">🐍 كود Python</div>
+        <div class="sug" onclick="suggest('ما الفرق بين React و Vue؟')">⚛️ React vs Vue</div>
+        <div class="sug" onclick="suggest('ولّد لي صورة لمدينة مستقبلية')">🎨 توليد صورة</div>
+        <div class="sug" onclick="suggest('اشرح لي Docker في 5 نقاط')">🐳 شرح Docker</div>
+        <div class="sug" onclick="suggest('اكتب SQL query لجلب أعلى 10 منتجات مبيعاً')">🗄️ SQL query</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="attachments" id="attachments"></div>
+    <div class="input-row">
+      <div class="input-btns">
+        <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="رفع ملف/صورة">📎</button>
+        <button class="icon-btn" onclick="generateImage()" title="توليد صورة">🎨</button>
+      </div>
+      <textarea id="input" placeholder="اكتب رسالتك هنا..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMsg()">➤</button>
+    </div>
+    <input type="file" id="fileInput" multiple accept="image/*,.txt,.js,.jsx,.ts,.tsx,.py,.html,.css,.json,.md,.csv" onchange="handleFile(event)">
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+// ============ STATE ============
+var currentUser = null;
+var currentChatId = null;
+var attachments = [];
+var isTyping = false;
+
+// ============ AUTH ============
+function getUsers() { return JSON.parse(localStorage.getItem('jimmy_users') || '{}'); }
+function saveUsers(u) { localStorage.setItem('jimmy_users', JSON.stringify(u)); }
+function getChats(email) { return JSON.parse(localStorage.getItem('jimmy_chats_' + email) || '[]'); }
+function saveChats(email, chats) { localStorage.setItem('jimmy_chats_' + email, JSON.stringify(chats)); }
+
+function switchTab(t) {
+  document.getElementById('login-form').style.display = t === 'login' ? 'block' : 'none';
+  document.getElementById('register-form').style.display = t === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach(function(el, i) {
+    el.classList.toggle('active', (t === 'login' && i === 0) || (t === 'register' && i === 1));
+  });
+  document.getElementById('auth-err').textContent = '';
+}
+
+function authErr(msg) { document.getElementById('auth-err').textContent = msg; }
+
+function login() {
+  var email = document.getElementById('login-email').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  if (!email || !pass) return authErr('أدخل البريد وكلمة المرور');
+  var users = getUsers();
+  if (!users[email] || users[email].pass !== pass) return authErr('البريد أو كلمة المرور غلط');
+  currentUser = { email: email, name: users[email].name };
+  document.getElementById('auth').style.display = 'none';
+  initApp();
+}
+
+function register() {
+  var name = document.getElementById('reg-name').value.trim();
+  var email = document.getElementById('reg-email').value.trim();
+  var pass = document.getElementById('reg-pass').value;
+  if (!name || !email || !pass) return authErr('أكمل كل الحقول');
+  if (pass.length < 6) return authErr('كلمة المرور 6 أحرف على الأقل');
+  var users = getUsers();
+  if (users[email]) return authErr('هذا البريد مسجل بالفعل');
+  users[email] = { name: name, pass: pass };
+  saveUsers(users);
+  currentUser = { email: email, name: name };
+  document.getElementById('auth').style.display = 'none';
+  initApp();
+}
+
+function logout() {
+  currentUser = null;
+  currentChatId = null;
+  document.getElementById('auth').style.display = 'flex';
+  document.getElementById('messages').innerHTML = '<div class="welcome" id="welcome"><h2>⚡ JIMMY AI</h2><p>مساعدك الذكي — اسألني أي حاجة!</p></div>';
+}
+
+// ============ APP ============
+function initApp() {
+  document.getElementById('sb-user').textContent = currentUser.name;
+  renderChatsList();
+  newChat();
+}
+
+function newChat() {
+  var chats = getChats(currentUser.email);
+  var id = 'chat_' + Date.now();
+  chats.unshift({ id: id, title: 'محادثة جديدة', messages: [], created: Date.now() });
+  saveChats(currentUser.email, chats);
+  openChat(id);
+  renderChatsList();
+}
+
+function openChat(id) {
+  currentChatId = id;
+  var chats = getChats(currentUser.email);
+  var chat = chats.find(function(c) { return c.id === id; });
+  document.getElementById('chat-title').textContent = chat ? chat.title : 'JIMMY AI';
+  renderMessages(chat ? chat.messages : []);
+  renderChatsList();
+}
+
+function renderChatsList() {
+  var chats = getChats(currentUser.email);
+  var el = document.getElementById('chats-list');
+  el.innerHTML = '';
+  chats.forEach(function(c) {
+    var div = document.createElement('div');
+    div.className = 'chat-item' + (c.id === currentChatId ? ' active' : '');
+    div.innerHTML = '<span class="chat-title">' + escHtml(c.title) + '</span>' +
+      '<button class="del-btn" onclick="deleteChat(\'' + c.id + '\',event)">🗑</button>';
+    div.onclick = function() { openChat(c.id); };
+    el.appendChild(div);
+  });
+}
+
+function deleteChat(id, e) {
+  e.stopPropagation();
+  var chats = getChats(currentUser.email).filter(function(c) { return c.id !== id; });
+  saveChats(currentUser.email, chats);
+  if (currentChatId === id) {
+    if (chats.length) openChat(chats[0].id);
+    else newChat();
+  }
+  renderChatsList();
+}
+
+function renderMessages(msgs) {
+  var el = document.getElementById('messages');
+  if (!msgs.length) {
+    el.innerHTML = '<div class="welcome" id="welcome"><h2>⚡ JIMMY AI</h2><p>مساعدك الذكي — اسألني أي حاجة!</p><div class="suggestions"><div class="sug" onclick="suggest(\'اشرح لي مفهوم الـ API\')">🔌 اشرح الـ API</div><div class="sug" onclick="suggest(\'اكتب لي كود Python لقراءة ملف CSV\')">🐍 كود Python</div><div class="sug" onclick="suggest(\'ما الفرق بين React و Vue؟\')">⚛️ React vs Vue</div><div class="sug" onclick="suggest(\'ولّد لي صورة لمدينة مستقبلية\')">🎨 توليد صورة</div></div></div>';
+    return;
+  }
+  el.innerHTML = '';
+  msgs.forEach(function(m) { appendBubble(m.role, m.content, m.imageUrl); });
+  el.scrollTop = el.scrollHeight;
+}
+
+function appendBubble(role, content, imageUrl) {
+  var el = document.getElementById('messages');
+  var welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  var div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'ai');
+
+  var av = '<div class="avatar">' + (role === 'user' ? '👤' : '<img src="logo/jimmy-logo (2).svg" alt="JIMMY" style="width:32px;height:32px;">') + '</div>';
+  var html = formatMsg(content || '');
+  if (imageUrl) html += '<br><img src="' + imageUrl + '" onclick="openLightbox(\'' + imageUrl + '\')" alt="generated">';
+
+  div.innerHTML = av + '<div class="bubble">' + html + '</div>';
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function formatMsg(text) {
+  // code blocks
+  text = text.replace(/```(\w*)\n?([\s\S]*?)```/g, function(_, lang, code) {
+    var id = 'code_' + Math.random().toString(36).slice(2);
+    return '<pre><button class="copy-btn" onclick="copyCode(\'' + id + '\')">نسخ</button><code id="' + id + '">' + escHtml(code.trim()) + '</code></pre>';
+  });
+  // inline code
+  text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // newlines
+  text = text.replace(/\n/g, '<br>');
+  return text;
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyCode(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(function() {
+    var btn = el.parentElement.querySelector('.copy-btn');
+    if (btn) { btn.textContent = '✓ تم'; setTimeout(function() { btn.textContent = 'نسخ'; }, 2000); }
+  });
+}
+
+// ============ SEND ============
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function suggest(text) {
+  document.getElementById('input').value = text;
+  sendMsg();
+}
+
+async function sendMsg() {
+  if (isTyping) return;
+  var input = document.getElementById('input');
+  var text = input.value.trim();
+  if (!text && !attachments.length) return;
+
+  // check image generation
+  var imgKeywords = ['ولد', 'ولّد', 'اعمل صورة', 'ارسم', 'generate image', 'صورة ل', 'صور ل'];
+  var isImgReq = imgKeywords.some(function(k) { return text.includes(k); });
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  // build content
+  var userContent = text;
+  if (attachments.length) {
+    var attText = attachments.filter(function(a) { return a.type === 'file'; }).map(function(a) {
+      return '\n\n[ملف: ' + a.name + ']\n' + a.content;
+    }).join('');
+    userContent = text + attText;
+  }
+
+  appendBubble('user', userContent);
+
+  // save to chat
+  var chats = getChats(currentUser.email);
+  var chat = chats.find(function(c) { return c.id === currentChatId; });
+  if (!chat) return;
+  chat.messages.push({ role: 'user', content: userContent });
+  if (chat.title === 'محادثة جديدة' && text) {
+    chat.title = text.slice(0, 40);
+    document.getElementById('chat-title').textContent = chat.title;
+  }
+  saveChats(currentUser.email, chats);
+  renderChatsList();
+
+  // clear attachments
+  attachments = [];
+  document.getElementById('attachments').innerHTML = '';
+
+  if (isImgReq) {
+    await handleImageGen(text, chat, chats);
+    return;
+  }
+
+  // typing indicator
+  isTyping = true;
+  document.getElementById('send-btn').disabled = true;
+  var typingDiv = document.createElement('div');
+  typingDiv.className = 'msg ai';
+  typingDiv.id = 'typing-ind';
+  typingDiv.innerHTML = '<div class="avatar"><img src="logo/jimmy-logo (2).svg" alt="JIMMY" style="width:32px;height:32px;"></div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  document.getElementById('messages').appendChild(typingDiv);
+  document.getElementById('messages').scrollTop = 99999;
+
+  try {
+    var resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: chat.messages })
+    });
+    var data = await resp.json();
+    var reply = data.reply || data.error || 'لم أتمكن من الرد.';
+
+    typingDiv.remove();
+    appendBubble('assistant', reply);
+    chat.messages.push({ role: 'assistant', content: reply });
+    saveChats(currentUser.email, chats);
+  } catch(e) {
+    typingDiv.remove();
+    appendBubble('assistant', '⚠️ خطأ في الاتصال: ' + e.message + '\n\nتأكد إن server.js شغال بـ node server.js');
+  }
+
+  isTyping = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+async function handleImageGen(text, chat, chats) {
+  isTyping = true;
+  document.getElementById('send-btn').disabled = true;
+
+  var typingDiv = document.createElement('div');
+  typingDiv.className = 'msg ai';
+  typingDiv.id = 'typing-ind';
+  typingDiv.innerHTML = '<div class="avatar">🤖</div><div class="bubble"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  document.getElementById('messages').appendChild(typingDiv);
+  document.getElementById('messages').scrollTop = 99999;
+
+  try {
+    // translate via server
+    var transResp = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text })
+    });
+    var transData = await transResp.json();
+    var engPrompt = (transData.eng || text).trim();
+
+    // build pollinations URL directly — no redirect, direct image
+    var seed = Math.floor(Math.random() * 999999);
+    var imgUrl = 'https://image.pollinations.ai/prompt/' +
+      encodeURIComponent(engPrompt) +
+      '?width=768&height=768&seed=' + seed + '&nologo=true&model=flux';
+
+    typingDiv.remove();
+
+    // show loading placeholder then swap when loaded
+    var welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+    var msgDiv = document.createElement('div');
+    msgDiv.className = 'msg ai';
+    msgDiv.innerHTML = '<div class="avatar">🤖</div><div class="bubble" id="img-bubble">🎨 جاري توليد الصورة...<br><small style="color:var(--muted)">قد يأخذ 10-20 ثانية</small></div>';
+    document.getElementById('messages').appendChild(msgDiv);
+    document.getElementById('messages').scrollTop = 99999;
+
+    // load image
+    var img = new Image();
+    img.onload = function() {
+      var bubble = document.getElementById('img-bubble');
+      if (bubble) {
+        bubble.innerHTML = '🎨 تم توليد الصورة!<br><img src="' + imgUrl + '" style="max-width:100%;border-radius:10px;margin-top:8px;cursor:pointer" onclick="openLightbox(\'' + imgUrl + '\')">' +
+          '<br><a href="' + imgUrl + '" download="jimmy-image.jpg" style="color:var(--green);font-size:.85rem;text-decoration:none">⬇️ تحميل الصورة</a>';
+        bubble.removeAttribute('id');
+      }
+    };
+    img.onerror = function() {
+      var bubble = document.getElementById('img-bubble');
+      if (bubble) {
+        bubble.innerHTML = '⚠️ فشل تحميل الصورة — جرّب تاني أو غيّر الوصف';
+        bubble.removeAttribute('id');
+      }
+    };
+    img.src = imgUrl;
+
+    chat.messages.push({ role: 'assistant', content: '🎨 صورة: ' + engPrompt, imageUrl: imgUrl });
+    saveChats(currentUser.email, chats);
+  } catch(e) {
+    var t = document.getElementById('typing-ind');
+    if (t) t.remove();
+    appendBubble('assistant', '⚠️ خطأ: ' + e.message);
+  }
+
+  isTyping = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+function generateImage() {
+  var input = document.getElementById('input');
+  if (!input.value.trim()) input.value = 'ولّد لي صورة ل';
+  input.focus();
+}
+
+// ============ FILES ============
+function handleFile(e) {
+  var files = Array.from(e.target.files);
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    if (file.type.startsWith('image/')) {
+      reader.onload = function(ev) {
+        attachments.push({ type: 'image', name: file.name, data: ev.target.result });
+        renderAttachments();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      reader.onload = function(ev) {
+        attachments.push({ type: 'file', name: file.name, content: ev.target.result });
+        renderAttachments();
+      };
+      reader.readAsText(file);
+    }
+  });
+  e.target.value = '';
+}
+
+function renderAttachments() {
+  var el = document.getElementById('attachments');
+  el.innerHTML = '';
+  attachments.forEach(function(a, i) {
+    var div = document.createElement('div');
+    div.className = 'att-item';
+    div.innerHTML = (a.type === 'image' ? '🖼️ ' : '📄 ') + escHtml(a.name) +
+      '<button class="att-remove" onclick="removeAtt(' + i + ')">✕</button>';
+    el.appendChild(div);
+  });
+}
+
+function removeAtt(i) {
+  attachments.splice(i, 1);
+  renderAttachments();
+}
+
+// ============ LIGHTBOX ============
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+</script>
+</body>
+</html>
